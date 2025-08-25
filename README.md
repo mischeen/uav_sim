@@ -1,12 +1,15 @@
 # project_template
 This is an empty project template intended for quick setup.
 
-Use it as follows: 
+Use it as follows in git bash console: 
 
 ```bash
-gh repo create <MY_NEW_PROJECT> --template=mischeen/project_template --private # or --public if preferred
+gh repo create <MY_NEW_PROJECT> --template=mischeen/project_template --private --clone # or --public if preferred
 cd <MY_NEW_PROJECT>
 uv sync
+
+source .venv/Scripts/activate
+code .
 ```
 
 ## Project Summary
@@ -20,7 +23,7 @@ uv sync
 
 ## Folder Structure
 ```text
-project_template/
+usv_sim/
 ├── data/
 │   ├── raw/
 │   └── processed/
