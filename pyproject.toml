@@ -11,6 +11,7 @@ dependencies = [
     "matplotlib",
     "jupyter",
     "mesa>=3.0.3",
+    "seaborn>=0.13.2",
 ]
 requires-python = ">=3.10"
 
