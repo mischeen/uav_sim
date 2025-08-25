@@ -1,9 +1,9 @@
 [project]
-name = "my_project"
+name = "UAV_SIM"
 version = "0.1.0"
-description = "A Python project template"
+description = "An agent-based UAV simulator"
 authors = [
-    { name = "Your Name" }   # email optional
+    { name = "Michael SCHEEN" }   
 ]
 dependencies = [
     "numpy",
@@ -13,9 +13,8 @@ dependencies = [
     "mesa>=3.0.3",
     "seaborn>=0.13.2",
     "pytest>=8.4.1",
+    "solara>=1.51.1",
+    "networkx>=3.4.2",
+    "altair>=5.5.0",
 ]
 requires-python = ">=3.10"
-
-[tool.uv]
-# Always create a .venv folder in the project root
-venv = ".venv"

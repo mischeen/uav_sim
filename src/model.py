@@ -1,21 +1,35 @@
 import mesa
-import seaborn as sns
 import numpy as np
-import pandas as pd
 from collections import namedtuple
 
+
 LaunchPadConfig = namedtuple('LaunchPadConfig', ('x', 'y', 'num_uavs'))
+
+def compute_coverage(model):
+    """Fraction of cells visited at least once"""
+    return np.count_nonzero(model.coverage > 0) / model.coverage.size
+
+def compute_redundance(model):
+    """Fraction of cells visited more than once"""
+    return np.count_nonzero(model.coverage > 1) / model.coverage.size
 
 class UAVModel(mesa.Model):
     """A model with some number of agents."""
 
     def __init__(self, width, height, launch_pads):
         super().__init__()
+        self.datacollector = mesa.DataCollector(
+            model_reporters={
+                "Coverage": compute_coverage,
+                "Redundance": compute_redundance}
+        )
+        
         self.grid = mesa.space.MultiGrid(width, height, torus=False) # creates space
         self.coverage = np.zeros((height, width), dtype=int) # coverage matrix to track visits per cell
         self.launch_pads = self.create_launchpads(launch_pads=launch_pads)
         for pad in self.launch_pads:
             pad.spawn_uavs(model=self)
+        
 
     def create_launchpads(self, launch_pads):
         """Creates launchpad on the grid"""
@@ -24,9 +38,11 @@ class UAVModel(mesa.Model):
             pads.append(LaunchPad((p.x, p.y), p.num_uavs))
         return pads
 
+
     def step(self):
         self.agents.do("move")
         self.agents.do("inspect")
+        self.datacollector.collect(self)
 
 
 class LaunchPad():
