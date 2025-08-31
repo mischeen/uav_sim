@@ -1,5 +1,6 @@
 from src.model import UAVModel, LaunchPadConfig, UAVAgent, CellAgent
-from mesa.visualization import SolaraViz, make_plot_component
+from mesa.visualization import SolaraViz, make_plot_component, Slider
+
 from mesa.visualization.utils import update_counter
 import matplotlib
 import matplotlib.patches as patches
@@ -14,7 +15,14 @@ GRID_SIZE = 50
 model_params = {
     "width": GRID_SIZE,
     "height": GRID_SIZE,
-    "launch_pads": LAUNCH_PADS
+    "launch_pads": LAUNCH_PADS,
+    "p_tree": Slider(
+            "Tree density",
+            value=0.9,       # default
+            min=0.0,
+            max=1.0,
+            step=0.05,
+        ),
 }
 
 # Initialize model
