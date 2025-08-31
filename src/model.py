@@ -20,7 +20,7 @@ def compute_redundancy(model):
 class UAVModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self, width, height, launch_pads, p_tree=0.6):
+    def __init__(self, width, height, launch_pads, p_tree=0.9):
         super().__init__()
         self.datacollector = mesa.DataCollector(
             model_reporters={
@@ -57,10 +57,15 @@ class UAVModel(mesa.Model):
 
 
     def step(self):
-        for uav in (a for a in self.agents if isinstance(a, UAVAgent)):
-            uav.move()
-            uav.inspect()
-            self.datacollector.collect(self)
+        for a in self.agents:
+            # if isinstance(a, UAVAgent):
+            #     a.move()
+            #     a.inspect()
+                
+            if isinstance(a, CellAgent):
+                a.update_state()
+        self.datacollector.collect(self)
+        self.agents.do('advance')
 
 
 class LaunchPad():
@@ -113,6 +118,7 @@ class CellAgent(mesa.Agent):
         super().__init__(model)
         self.valid_states = ["empty", "tree", "burning"]
         self.set_state(state)
+        self.next_state = None
         
     def set_state(self, state):
         if state in self.valid_states:
@@ -129,3 +135,39 @@ class CellAgent(mesa.Agent):
             self.color = 'orange'
         else:
             self.color = 'black'
+
+    def update_state(self):
+        if self.state == "tree":
+            neighbors = self.model.grid.get_neighbors(
+                self.pos, moore=True, include_center=False
+            ) 
+            burning_neighbors = [n for n in neighbors if isinstance(n, CellAgent) and n.state == "burning"]
+            if burning_neighbors:
+                if random.random() < self.ignite_prob(burning_neighbors):
+                    self.next_state = "burning"
+                else:
+                    self.next_state = "tree"
+            else:
+                self.next_state = "tree"   
+        elif self.state == "burning":
+            self.next_state = "empty"    
+        else:
+            self.next_state = "empty"         
+
+
+    def ignite_prob(self, burning_neighbors): 
+        base=0.4
+        x,y = self.pos
+        for n in burning_neighbors:
+            nx,ny = n.pos
+            if x > nx:
+                return base + 0.5
+        else:
+            return base
+
+
+    def advance(self):
+        """Apply the state update."""
+        self.set_state(self.next_state)
+
+
