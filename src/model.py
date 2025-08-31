@@ -55,17 +55,12 @@ class UAVModel(mesa.Model):
             pads.append(LaunchPad((p.x, p.y), p.num_uavs))
         return pads
 
-
     def step(self):
-        for a in self.agents:
-            # if isinstance(a, UAVAgent):
-            #     a.move()
-            #     a.inspect()
-                
-            if isinstance(a, CellAgent):
-                a.update_state()
+        cells = self.agents.select(agent_type=CellAgent)   
+        cells.do('update_state')
+        cells.do('advance')
         self.datacollector.collect(self)
-        self.agents.do('advance')
+
 
 
 class LaunchPad():
@@ -157,9 +152,9 @@ class CellAgent(mesa.Agent):
 
     def ignite_prob(self, burning_neighbors): 
         base=0.4
-        x,y = self.pos
+        x, _ = self.pos
         for n in burning_neighbors:
-            nx,ny = n.pos
+            nx, _ = n.pos
             if x > nx:
                 return base + 0.5
         else:
