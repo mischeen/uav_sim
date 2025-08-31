@@ -1,14 +1,15 @@
-from src.model import UAVModel, LaunchPadConfig
+from src.model import UAVModel, LaunchPadConfig, UAVAgent, CellAgent
 from mesa.visualization import SolaraViz, make_plot_component
 from mesa.visualization.utils import update_counter
 import matplotlib
+import matplotlib.patches as patches
 import solara
 from matplotlib.figure import Figure
 import numpy as np
 
 # Simulation parameters: uv run solara run app.py
 LAUNCH_PADS = [LaunchPadConfig(9,0,1)]
-GRID_SIZE = 100
+GRID_SIZE = 50
 
 model_params = {
     "width": GRID_SIZE,
@@ -20,7 +21,7 @@ model_params = {
 model = UAVModel(GRID_SIZE, GRID_SIZE, LAUNCH_PADS)
 
 # Custom Solara component for UAV trajectories
-cmap = matplotlib.colormaps.get_cmap("tab20")
+uav_cmap = matplotlib.colormaps.get_cmap("tab20")
 
 @solara.component
 def UAVGrid(model):
@@ -41,13 +42,27 @@ def UAVGrid(model):
     ax.set_aspect('equal')
     ax.grid(True)
 
+    # Draw Calls
+    cell_size = 1.0
+    for cell in (a for a in model.agents if isinstance(a, CellAgent)):
+        x, y = cell.pos
+        rect = patches.Rectangle(
+            (x, y),                # (lower-left corner)
+            cell_size, cell_size,  # width, height
+            facecolor=cell.color,
+            edgecolor="black",     # optional grid lines
+            linewidth=0.5,
+            zorder=5,
+        )
+        ax.add_patch(rect)
+
     # Draw UAV trajectories and positions
-    for i, uav in enumerate(model.agents):
-        color = cmap(i % 20)
-        track = np.array(uav.track)
-        if len(track) > 1:
-            ax.plot(track[:,0], track[:,1], color=color, alpha=0.4)
-        ax.scatter(track[-1,0], track[-1,1], color=color, s=200, edgecolor=None, zorder=5)
+    for i, uav in enumerate(a for a in model.agents if isinstance(a, UAVAgent)):
+            color = uav_cmap(i % 20)
+            track = np.array(uav.track)
+            if len(track) > 1:
+                ax.plot(track[:,0], track[:,1], color=color, linewidth=4, alpha=0.8, zorder=6)
+            ax.scatter(track[-1,0], track[-1,1], color=color, s=200, edgecolor=None, zorder=7)
 
     return solara.FigureMatplotlib(fig)
 

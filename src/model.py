@@ -1,6 +1,7 @@
 import mesa
 import numpy as np
 from collections import namedtuple
+import random
 
 
 LaunchPadConfig = namedtuple('LaunchPadConfig', ('x', 'y', 'num_uavs'))
@@ -15,10 +16,11 @@ def compute_redundancy(model):
         return 0
     return visited_cells.mean()
 
+
 class UAVModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self, width, height, launch_pads):
+    def __init__(self, width, height, launch_pads, p_tree=0.6):
         super().__init__()
         self.datacollector = mesa.DataCollector(
             model_reporters={
@@ -27,11 +29,24 @@ class UAVModel(mesa.Model):
         )
         
         self.grid = mesa.space.MultiGrid(width, height, torus=False) # creates space
-        self.coverage = np.zeros((height, width), dtype=int) # coverage matrix to track visits per cell
+        self.create_landscape(p_tree)
+        self.ignite_cell((width//2, height//2))
+        self.coverage = np.zeros((height, width), dtype=int) # coverage matrix to track visits per cell        
         self.launch_pads = self.create_launchpads(launch_pads=launch_pads)
         for pad in self.launch_pads:
             pad.spawn_uavs(model=self)
-        
+                    
+
+    def create_landscape(self, p_tree):
+        for _, pos in self.grid.coord_iter():
+            state = "tree" if random.random() < p_tree else "empty"
+            cell = CellAgent(self, state=state)
+            self.grid.place_agent(cell, pos)
+
+    def ignite_cell(self, pos):
+        cell = next(a for a in self.grid.get_cell_list_contents([pos]) if isinstance(a, CellAgent))
+        cell.set_state("burning")
+
 
     def create_launchpads(self, launch_pads):
         """Creates launchpad on the grid"""
@@ -42,9 +57,10 @@ class UAVModel(mesa.Model):
 
 
     def step(self):
-        self.agents.do("move")
-        self.agents.do("inspect")
-        self.datacollector.collect(self)
+        for uav in (a for a in self.agents if isinstance(a, UAVAgent)):
+            uav.move()
+            uav.inspect()
+            self.datacollector.collect(self)
 
 
 class LaunchPad():
@@ -89,3 +105,27 @@ class UAVAgent(mesa.Agent):
         """Drone inspects the cell"""
         y, x = self.pos
         self.model.coverage[y][x] += 1
+
+
+class CellAgent(mesa.Agent):
+
+    def __init__(self, model, state):
+        super().__init__(model)
+        self.valid_states = ["empty", "tree", "burning"]
+        self.set_state(state)
+        
+    def set_state(self, state):
+        if state in self.valid_states:
+            self.state = state
+            self._set_color(state)
+
+        else:
+            raise ValueError(f'Provided state "{state}" is not a valid cell state. Choose from {self.valid_states}.') 
+
+    def _set_color(self, state):
+        if state == "tree":
+            self.color = 'green'
+        elif state == "burning":
+            self.color = 'orange'
+        else:
+            self.color = 'black'
