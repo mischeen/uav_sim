@@ -9,9 +9,11 @@ def compute_coverage(model):
     """Fraction of cells visited at least once"""
     return np.count_nonzero(model.coverage > 0) / model.coverage.size
 
-def compute_redundance(model):
-    """Fraction of cells visited more than once"""
-    return np.count_nonzero(model.coverage > 1) / model.coverage.size
+def compute_redundancy(model):
+    visited_cells = model.coverage[model.coverage > 0]
+    if len(visited_cells) == 0:
+        return 0
+    return visited_cells.mean()
 
 class UAVModel(mesa.Model):
     """A model with some number of agents."""
@@ -21,7 +23,7 @@ class UAVModel(mesa.Model):
         self.datacollector = mesa.DataCollector(
             model_reporters={
                 "Coverage": compute_coverage,
-                "Redundance": compute_redundance}
+                "Redundancy": compute_redundancy}
         )
         
         self.grid = mesa.space.MultiGrid(width, height, torus=False) # creates space

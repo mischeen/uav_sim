@@ -1,5 +1,5 @@
 from src.model import UAVModel, LaunchPadConfig
-from mesa.visualization import SolaraViz, make_space_component, make_plot_component
+from mesa.visualization import SolaraViz, make_plot_component
 from mesa.visualization.utils import update_counter
 import matplotlib
 import solara
@@ -7,8 +7,8 @@ from matplotlib.figure import Figure
 import numpy as np
 
 # Simulation parameters: uv run solara run app.py
-LAUNCH_PADS = [LaunchPadConfig(0,0,10)]
-GRID_SIZE = 20
+LAUNCH_PADS = [LaunchPadConfig(9,0,1)]
+GRID_SIZE = 100
 
 model_params = {
     "width": GRID_SIZE,
@@ -20,7 +20,7 @@ model_params = {
 model = UAVModel(GRID_SIZE, GRID_SIZE, LAUNCH_PADS)
 
 # Custom Solara component for UAV trajectories
-cmap = matplotlib.cm.get_cmap("tab20")
+cmap = matplotlib.colormaps.get_cmap("tab20")
 
 @solara.component
 def UAVGrid(model):
@@ -53,17 +53,13 @@ def UAVGrid(model):
 
 # Coverage plot component
 CoveragePlot = make_plot_component("Coverage")
-RedundancePlot = make_plot_component("Redundance")
+RedundancePlot = make_plot_component("Redundancy")
 
-from mesa.visualization import SolaraViz
-import solara
 
 # Wrap your plots/components into a custom dashboard layout
 @solara.component
 def UAVDashboard(model):
     with solara.Column():
-#        solara.Markdown("### UAV Simulator Dashboard")
-
         # Top row: the grid
         with solara.Card("Simulation Grid"):
             UAVGrid(model)
@@ -72,7 +68,7 @@ def UAVDashboard(model):
         with solara.Row():
             with solara.Card("Coverage Over Time", style={"width": "50%"}):
                 CoveragePlot(model)
-            with solara.Card("Redundance Over Time", style={"width": "50%"}):
+            with solara.Card("Redundancy Over Time", style={"width": "50%"}):
                 RedundancePlot(model)
 
 # Now tell SolaraViz to use your custom dashboard
